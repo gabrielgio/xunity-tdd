@@ -2,12 +2,16 @@ class TestResult(object):
 
     def __init__(self):
         self.runCount = 0
+        self.errorCount = 0
 
     def test_started(self):
         self.runCount = self.runCount + 1
 
+    def test_failed(self):
+        self.errorCount = self.errorCount + 1
+
     def summary(self):
-        return "%d run, 0 failed" % self.runCount
+        return "%d run, %d failed" % (self.runCount, self.errorCount)
 
 
 class TestCase(object):
@@ -25,8 +29,11 @@ class TestCase(object):
         result = TestResult()
         result.test_started()
         self.set_up()
-        method = getattr(self, self.name)
-        method()
+        try:
+            method = getattr(self, self.name)
+            method()
+        except:
+            result.test_failed()
         self.tear_down()
         return result
 
@@ -66,8 +73,14 @@ class TestCaseTest(TestCase):
         result = test.run()
         assert "1 run, 1 failed", result.summary()
 
+    def test_failed_result_formatting(self):
+        result = TestResult()
+        result.test_started()
+        result.test_failed()
+        assert "1 run, 1 failed" == result.summary()
+
 
 TestCaseTest("test_result").run()
 TestCaseTest("test_template_method").run()
-# Notice, at this point this is supposed to throw an error.
 TestCaseTest("test_failed_result").run()
+TestCaseTest("test_failed_result_formatting").run()
